@@ -10,7 +10,7 @@ data class EditorConfig(
     val wordWrap: Boolean = false,
     val editable: Boolean = true,
     val highlightCurrentLine: Boolean = true,
-    val cursorBlinkPeriod: Int = 300,
+    val cursorBlinkPeriod: Int = 200,
     val scalable: Boolean = true,
     val overscanLines: Int = 5,
 )

@@ -4,9 +4,11 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.provider.OpenableColumns
+import android.view.KeyEvent
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -22,7 +24,6 @@ import com.androtext.app.ui.screens.EditorHost
 import com.androtext.app.ui.screens.EditorScreen
 import com.androtext.app.ui.screens.OpenFileScreen
 import com.androtext.app.ui.screens.SettingsScreen
-import com.androtext.app.ui.screens.WelcomeScreen
 import com.androtext.app.ui.theme.AndroTextTheme
 import com.androtext.app.ui.viewmodel.EditorViewModel
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +34,14 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
 
     private val viewModel: EditorViewModel by viewModels()
+
+    private val openFileLauncher = registerForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        if (uri != null) {
+            loadFileFromUri(uri)
+        }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -115,6 +124,59 @@ class MainActivity : ComponentActivity() {
         } catch (_: Exception) {
         }
     }
+
+    private fun openFilePicker() {
+        openFileLauncher.launch(arrayOf("*/*"))
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.action == KeyEvent.ACTION_DOWN && event.isCtrlPressed) {
+            val shift = event.isShiftPressed
+            when (event.keyCode) {
+                KeyEvent.KEYCODE_S -> {
+                    if (!shift) { saveFile(); return true }
+                }
+                KeyEvent.KEYCODE_O -> {
+                    if (!shift) { openFilePicker(); return true }
+                }
+                KeyEvent.KEYCODE_F -> {
+                    if (!shift) { viewModel.toggleSearch(); return true }
+                }
+                KeyEvent.KEYCODE_H -> {
+                    if (!shift) { viewModel.showReplace(); return true }
+                }
+                KeyEvent.KEYCODE_G -> {
+                    if (shift) viewModel.searchPrevious() else viewModel.searchNext()
+                    return true
+                }
+                KeyEvent.KEYCODE_W -> {
+                    if (!shift) {
+                        viewModel.activeTabId?.let { viewModel.closeTab(it) }
+                        return true
+                    }
+                }
+                KeyEvent.KEYCODE_EQUALS, KeyEvent.KEYCODE_NUMPAD_ADD -> {
+                    viewModel.updateFontSize((viewModel.fontSize + 1).coerceAtMost(32f))
+                    return true
+                }
+                KeyEvent.KEYCODE_MINUS, KeyEvent.KEYCODE_NUMPAD_SUBTRACT -> {
+                    viewModel.updateFontSize((viewModel.fontSize - 1).coerceAtLeast(8f))
+                    return true
+                }
+                KeyEvent.KEYCODE_0 -> {
+                    if (!shift) { viewModel.updateFontSize(14f); return true }
+                }
+            }
+        }
+        if (event.action == KeyEvent.ACTION_DOWN
+            && event.keyCode == KeyEvent.KEYCODE_ESCAPE
+            && viewModel.isSearchOpen
+        ) {
+            viewModel.closeSearch()
+            return true
+        }
+        return super.dispatchKeyEvent(event)
+    }
 }
 
 @Composable
@@ -146,6 +208,18 @@ fun AndroTextApp(
                         onHostReady = { host ->
                             viewModel.editorContentProvider =
                                 { host.getContent() }
+                            viewModel.doSearch = { q, cs, rx ->
+                                host.search(q, cs, rx)
+                            }
+                            viewModel.doSearchNext = { host.searchNext() }
+                            viewModel.doSearchPrev = { host.searchPrevious() }
+                            viewModel.doReplaceCurrent = { r ->
+                                host.replaceCurrent(r)
+                            }
+                            viewModel.doReplaceAll = { r ->
+                                host.replaceAll(r)
+                            }
+                            viewModel.doStopSearch = { host.stopSearch() }
                         },
                     )
                 }

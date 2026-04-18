@@ -63,6 +63,32 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     var editorContentProvider: (() -> String)? = null
 
+    var isSearchOpen by mutableStateOf(false)
+        private set
+    var searchQuery by mutableStateOf("")
+        private set
+    var replaceQuery by mutableStateOf("")
+        private set
+    var isReplaceMode by mutableStateOf(false)
+        private set
+    var matchCount by mutableIntStateOf(0)
+        private set
+    var currentMatch by mutableIntStateOf(0)
+        private set
+    var caseSensitive by mutableStateOf(false)
+        private set
+    var regexSearch by mutableStateOf(false)
+        private set
+    var requestSearchFocus by mutableStateOf(false)
+        internal set
+
+    var doSearch: ((String, Boolean, Boolean) -> Unit)? = null
+    var doSearchNext: (() -> Unit)? = null
+    var doSearchPrev: (() -> Unit)? = null
+    var doReplaceCurrent: ((String) -> Unit)? = null
+    var doReplaceAll: ((String) -> Unit)? = null
+    var doStopSearch: (() -> Unit)? = null
+
     val activeTab: EditorTab? get() = tabs.find { it.id == activeTabId }
 
     val activeBuffer: PieceTableBuffer? get() = activeTab?.buffer
@@ -99,6 +125,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     fun switchToTab(tabId: String) {
         if (tabId == activeTabId) return
         saveCurrentEditorContent()
+        if (isSearchOpen) closeSearch()
         activeTabId = tabId
         fileVersion++
     }
@@ -109,6 +136,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
         val wasActive = tabId == activeTabId
         tabs = tabs.filter { it.id != tabId }
+        if (isSearchOpen) closeSearch()
 
         if (wasActive) {
             if (tabs.isNotEmpty()) {
@@ -211,5 +239,124 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     fun updateHighlightCurrentLine(highlight: Boolean) {
         highlightCurrentLine = highlight
         editorConfig = editorConfig.copy(highlightCurrentLine = highlight)
+    }
+
+    fun toggleSearch() {
+        if (isSearchOpen) {
+            closeSearch()
+        } else {
+            isSearchOpen = true
+            isReplaceMode = false
+            requestSearchFocus = true
+        }
+    }
+
+    fun showReplace() {
+        isSearchOpen = true
+        isReplaceMode = true
+        requestSearchFocus = true
+    }
+
+    fun closeSearch() {
+        isSearchOpen = false
+        searchQuery = ""
+        replaceQuery = ""
+        isReplaceMode = false
+        matchCount = 0
+        currentMatch = 0
+        doStopSearch?.invoke()
+    }
+
+    fun updateSearchQuery(query: String) {
+        searchQuery = query
+        performSearch()
+    }
+
+    fun updateReplaceQuery(query: String) {
+        replaceQuery = query
+    }
+
+    fun toggleReplaceMode() {
+        isReplaceMode = !isReplaceMode
+    }
+
+    fun toggleCaseSensitive() {
+        caseSensitive = !caseSensitive
+        performSearch()
+    }
+
+    fun toggleRegex() {
+        regexSearch = !regexSearch
+        performSearch()
+    }
+
+    fun searchNext() {
+        if (matchCount == 0) return
+        doSearchNext?.invoke()
+        currentMatch = if (currentMatch >= matchCount) 1 else currentMatch + 1
+    }
+
+    fun searchPrevious() {
+        if (matchCount == 0) return
+        doSearchPrev?.invoke()
+        currentMatch = if (currentMatch <= 1) matchCount else currentMatch - 1
+    }
+
+    fun performReplace() {
+        doReplaceCurrent?.invoke(replaceQuery)
+        onContentChanged()
+        performSearch()
+    }
+
+    fun performReplaceAll() {
+        doReplaceAll?.invoke(replaceQuery)
+        onContentChanged()
+        performSearch()
+    }
+
+    fun clearSearchFocusRequest() {
+        requestSearchFocus = false
+    }
+
+    private fun performSearch() {
+        if (searchQuery.isEmpty()) {
+            matchCount = 0
+            currentMatch = 0
+            doStopSearch?.invoke()
+            return
+        }
+        try {
+            doSearch?.invoke(searchQuery, caseSensitive, regexSearch)
+            val content = editorContentProvider?.invoke() ?: ""
+            matchCount = countMatches(content, searchQuery, caseSensitive, regexSearch)
+            currentMatch = if (matchCount > 0) 1 else 0
+        } catch (_: Exception) {
+            matchCount = 0
+            currentMatch = 0
+        }
+    }
+
+    private fun countMatches(text: String, query: String, cs: Boolean, isRegex: Boolean): Int {
+        if (query.isEmpty() || text.isEmpty()) return 0
+        return try {
+            if (isRegex) {
+                val options = if (cs) setOf<RegexOption>() else setOf(RegexOption.IGNORE_CASE)
+                Regex(query, options).findAll(text).count()
+            } else {
+                val s = if (cs) text else text.lowercase()
+                val q = if (cs) query else query.lowercase()
+                var count = 0
+                var idx = 0
+                while (true) {
+                    idx = s.indexOf(q, idx)
+                    if (idx == -1) break
+                    count++
+                    idx += q.length
+                }
+                count
+            }
+        } catch (_: Exception) {
+            0
+        }
     }
 }

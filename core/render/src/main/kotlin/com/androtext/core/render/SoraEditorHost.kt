@@ -83,4 +83,47 @@ class SoraEditorHost @JvmOverloads constructor(
         _renderer = null
         editor.release()
     }
+
+    fun search(query: String, caseSensitive: Boolean, regex: Boolean) {
+        val options = io.github.rosemoe.sora.widget.EditorSearcher.SearchOptions(
+            !caseSensitive,
+            regex,
+        )
+        editor.searcher.search(query, options)
+    }
+
+    fun searchNext() {
+        try {
+            editor.searcher.gotoNext()
+        } catch (_: Exception) {
+        }
+    }
+
+    fun searchPrevious() {
+        try {
+            editor.searcher.gotoPrevious()
+        } catch (_: Exception) {
+        }
+    }
+
+    fun replaceCurrent(replacement: String) {
+        try {
+            editor.searcher.replaceCurrentMatch(replacement)
+        } catch (_: Exception) {
+        }
+    }
+
+    fun replaceAll(replacement: String) {
+        try {
+            editor.searcher.replaceAll(replacement)
+        } catch (_: Exception) {
+        }
+    }
+
+    fun stopSearch() {
+        try {
+            editor.searcher.stopSearch()
+        } catch (_: Exception) {
+        }
+    }
 }

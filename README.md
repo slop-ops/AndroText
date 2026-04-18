@@ -11,9 +11,30 @@ A lightweight, open-source text editor for Android. Built with a custom piece-ta
 - **Sora Editor rendering** — Viewport virtualization with configurable overscan, decoration overlays (selection, search, errors, warnings)
 - **TextMate syntax support** — Language registry with pluggable grammars, incremental tokenizer that only re-tokenizes dirty lines
 - **Compose UI** — Jetpack Compose + Material 3 with a Solarized Dark color scheme applied to both the app chrome and the editor
+- **Multi-tab editing** — Open multiple files simultaneously in a scrollable tab bar; each tab has its own buffer, modified indicator (`●`), and undo history; re-opening a file focuses its existing tab instead of duplicating
+- **Search & replace** — Powered by Sora Editor's `EditorSearcher`; real-time match highlighting, match count (`3/15`), case-sensitive and regex toggles, navigate next/previous, replace single or replace all
+- **Keyboard shortcuts** — gnome-text-editor style shortcuts via `Ctrl` key (see table below); works with hardware keyboards and Chrome OS
 - **Recent files** — Persisted via SharedPreferences; up to 20 recent files tracked with display name and timestamp
 - **Configurable editor** — Font size (8–32 sp), tab width (2–8), line numbers, word wrap, and current-line highlighting
 - **Edge-to-edge** — Uses `enableEdgeToEdge()` with `adjustResize` soft-input mode
+
+## Keyboard Shortcuts
+
+| Shortcut | Action |
+|----------|--------|
+| `Ctrl+S` | Save file |
+| `Ctrl+O` | Open file (system picker) |
+| `Ctrl+F` | Find |
+| `Ctrl+H` | Find & Replace |
+| `Ctrl+G` | Find next match |
+| `Ctrl+Shift+G` | Find previous match |
+| `Ctrl+W` | Close current tab |
+| `Ctrl+=` | Zoom in (font +1 sp) |
+| `Ctrl+-` | Zoom out (font −1 sp) |
+| `Ctrl+0` | Reset zoom (14 sp) |
+| `Escape` | Close search bar |
+| `Ctrl+Z` | Undo (handled by Sora Editor) |
+| `Ctrl+Shift+Z` | Redo (handled by Sora Editor) |
 
 ## Architecture
 
@@ -21,7 +42,7 @@ A lightweight, open-source text editor for Android. Built with a custom piece-ta
 ┌─────────────────────────────────────────────────────────────────┐
 │  app (Android Application)                                      │
 │  MainActivity · EditorViewModel · Compose screens               │
-│  (Editor / OpenFile / Settings / Welcome)                       │
+│  (Editor / OpenFile / Settings / Welcome / SearchBar)           │
 ├─────────────┬─────────────────────┬─────────────────────────────┤
 │ core:render │ core:lang           │ core:text-buffer             │
 │ (Android)   │ (Android)           │ (Pure JVM)                  │
@@ -40,9 +61,9 @@ A lightweight, open-source text editor for Android. Built with a custom piece-ta
 | Module | Type | Description |
 |--------|------|-------------|
 | `core:text-buffer` | Kotlin JVM | Piece table buffer, line index, undo/redo, NIO file I/O — no Android dependencies |
-| `core:render` | Android Library | Sora Editor `CodeEditor` wrapper, text renderer, viewport manager, decoration system |
+| `core:render` | Android Library | Sora Editor `CodeEditor` wrapper, text renderer, viewport manager, decoration system, search delegation |
 | `core:lang` | Android Library | TextMate grammar registry, token provider, incremental tokenizer, token store |
-| `app` | Android App | Compose UI (Material 3), `EditorViewModel`, SAF-based file open/save, settings, navigation |
+| `app` | Android App | Compose UI (Material 3), multi-tab `EditorViewModel`, SAF-based file open/save, search & replace UI, keyboard shortcuts, settings, navigation |
 
 ## Tech Stack
 
@@ -74,10 +95,11 @@ Requires `ANDROID_HOME` pointing to an Android SDK with platform 36 and build-to
 
 | Screen | Description |
 |--------|-------------|
-| **Welcome** | Shown when no file is open. Displays "Open a file" card and recent files list |
-| **Editor** | Full-screen editor with top app bar showing file name and modified indicator. Overflow menu for save/settings |
+| **Welcome** | Shown when no file is open. "Open a file" card and recent files list |
+| **Editor** | Top app bar (file name, modified indicator, save/open/find icons), scrollable tab bar, search bar (when active), full-screen Sora editor |
 | **Open File** | SAF file picker (`*/*` MIME) + recent files list with tap-to-reopen |
 | **Settings** | Font size slider, line numbers toggle, tab width slider, word wrap toggle, current-line highlight toggle |
+| **Search Bar** | Inline bar below tabs — find input with match count, prev/next, case-sensitive (`Aa`) and regex (`.*`) toggles, replace mode (`⇄`) with Replace/Replace All buttons |
 
 ## Project Structure
 
@@ -86,16 +108,19 @@ AndroText/
 ├── app/
 │   └── src/main/
 │       ├── kotlin/com/androtext/app/
-│       │   ├── MainActivity.kt
+│       │   ├── MainActivity.kt               # dispatchKeyEvent for shortcuts, SAF launcher
 │       │   └── ui/
 │       │       ├── navigation/Screen.kt
 │       │       ├── screens/
-│       │       │   ├── EditorScreen.kt      # Editor + Welcome screens
-│       │       │   ├── EditorHost.kt         # AndroidView bridge to SoraEditorHost
+│       │       │   ├── EditorScreen.kt       # Editor + tab bar + Welcome screens
+│       │       │   ├── EditorHost.kt          # AndroidView bridge to SoraEditorHost
+│       │       │   ├── SearchBar.kt           # Find/replace UI composable
 │       │       │   ├── OpenFileScreen.kt
 │       │       │   └── SettingsScreen.kt
-│       │       ├── theme/Theme.kt            # Solarized Dark MaterialTheme
-│       │       └── viewmodel/EditorViewModel.kt
+│       │       ├── theme/Theme.kt             # Solarized Dark MaterialTheme
+│       │       └── viewmodel/
+│       │           ├── EditorViewModel.kt     # Multi-tab state, search state, editor config
+│       │           └── EditorTab.kt           # Per-tab: uri, buffer, modified flag
 │       ├── res/
 │       └── AndroidManifest.xml
 ├── core/
@@ -114,7 +139,7 @@ AndroText/
 │   │       ├── UndoRedoStackTest.kt
 │   │       └── FileIOTest.kt
 │   ├── render/src/main/.../render/
-│   │   ├── SoraEditorHost.kt               # FrameLayout wrapping CodeEditor
+│   │   ├── SoraEditorHost.kt               # CodeEditor wrapper + search delegation
 │   │   ├── SoraTextRenderer.kt             # Decoration drawing on canvas
 │   │   ├── SoraViewportManager.kt          # Viewport change detection
 │   │   ├── TextRenderer.kt                 # Renderer + Decoration interfaces

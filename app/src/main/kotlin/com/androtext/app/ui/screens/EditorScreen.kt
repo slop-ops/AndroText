@@ -24,6 +24,7 @@ import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -81,6 +82,12 @@ fun EditorScreen(
                         actionIconContentColor = MaterialTheme.colorScheme.onSurface,
                     ),
                     actions = {
+                        IconButton(onClick = { viewModel.toggleSearch() }) {
+                            Icon(
+                                imageVector = Icons.Default.Search,
+                                contentDescription = "Find",
+                            )
+                        }
                         IconButton(onClick = onSave) {
                             Icon(
                                 imageVector = Icons.Default.Save,
@@ -104,6 +111,26 @@ fun EditorScreen(
                                 expanded = menuExpanded,
                                 onDismissRequest = { menuExpanded = false },
                             ) {
+                                DropdownMenuItem(
+                                    text = { Text("Find") },
+                                    onClick = {
+                                        menuExpanded = false
+                                        viewModel.toggleSearch()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Search, contentDescription = null)
+                                    },
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Find & Replace") },
+                                    onClick = {
+                                        menuExpanded = false
+                                        viewModel.showReplace()
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Search, contentDescription = null)
+                                    },
+                                )
                                 DropdownMenuItem(
                                     text = { Text("Save") },
                                     onClick = {
@@ -145,6 +172,30 @@ fun EditorScreen(
                     onTabSelected = onTabSelected,
                     onTabClosed = onTabClosed,
                 )
+
+                if (viewModel.isSearchOpen) {
+                    SearchBar(
+                        searchQuery = viewModel.searchQuery,
+                        onSearchQueryChange = { viewModel.updateSearchQuery(it) },
+                        replaceQuery = viewModel.replaceQuery,
+                        onReplaceQueryChange = { viewModel.updateReplaceQuery(it) },
+                        isReplaceMode = viewModel.isReplaceMode,
+                        matchCount = viewModel.matchCount,
+                        currentMatch = viewModel.currentMatch,
+                        caseSensitive = viewModel.caseSensitive,
+                        regex = viewModel.regexSearch,
+                        requestFocus = viewModel.requestSearchFocus,
+                        onFocusHandled = { viewModel.clearSearchFocusRequest() },
+                        onSearchNext = { viewModel.searchNext() },
+                        onSearchPrevious = { viewModel.searchPrevious() },
+                        onReplace = { viewModel.performReplace() },
+                        onReplaceAll = { viewModel.performReplaceAll() },
+                        onToggleCaseSensitive = { viewModel.toggleCaseSensitive() },
+                        onToggleRegex = { viewModel.toggleRegex() },
+                        onToggleReplaceMode = { viewModel.toggleReplaceMode() },
+                        onClose = { viewModel.closeSearch() },
+                    )
+                }
 
                 Box(
                     modifier = Modifier
