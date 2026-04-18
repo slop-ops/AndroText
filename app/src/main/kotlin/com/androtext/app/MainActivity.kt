@@ -133,10 +133,13 @@ fun AndroTextApp(
             onOpenRecentFile = onOpenRecentFile,
             onSettings = { currentScreen = Screen.Settings },
             onSave = onSave,
+            onTabSelected = { viewModel.switchToTab(it) },
+            onTabClosed = { viewModel.closeTab(it) },
             editorContent = {
-                if (viewModel.currentFileName != null) {
+                val buffer = viewModel.activeBuffer
+                if (buffer != null) {
                     EditorHost(
-                        buffer = viewModel.buffer,
+                        buffer = buffer,
                         config = viewModel.editorConfig,
                         fileVersion = viewModel.fileVersion,
                         onContentChanged = { viewModel.onContentChanged() },
@@ -144,16 +147,6 @@ fun AndroTextApp(
                             viewModel.editorContentProvider =
                                 { host.getContent() }
                         },
-                    )
-                } else {
-                    WelcomeScreen(
-                        recentFiles = viewModel.recentFiles,
-                        onOpenFile = { currentScreen = Screen.OpenFile },
-                        onOpenRecentFile = onOpenRecentFile,
-                        onRemoveRecentFile = { uriString ->
-                            viewModel.removeRecentFile(uriString)
-                        },
-                        onSettings = { currentScreen = Screen.Settings },
                     )
                 }
             },

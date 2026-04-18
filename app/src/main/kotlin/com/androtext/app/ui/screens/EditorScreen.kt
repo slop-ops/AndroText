@@ -1,6 +1,8 @@
 package com.androtext.app.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,9 +14,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.FolderOpen
 import androidx.compose.material.icons.filled.MoreVert
@@ -38,7 +43,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.androtext.app.ui.viewmodel.EditorTab
 import com.androtext.app.ui.viewmodel.EditorViewModel
 import com.androtext.app.ui.viewmodel.RecentFile
 
@@ -50,9 +57,11 @@ fun EditorScreen(
     onOpenRecentFile: (android.net.Uri) -> Unit,
     onSettings: () -> Unit,
     onSave: () -> Unit,
+    onTabSelected: (String) -> Unit,
+    onTabClosed: (String) -> Unit,
     editorContent: @Composable () -> Unit,
 ) {
-    if (viewModel.currentFileName != null) {
+    if (viewModel.tabs.isNotEmpty()) {
         var menuExpanded by remember { mutableStateOf(false) }
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -62,7 +71,7 @@ fun EditorScreen(
                 TopAppBar(
                     title = {
                         Text(
-                            text = if (viewModel.isModified) "${viewModel.currentFileName} *" else viewModel.currentFileName!!,
+                            text = if (viewModel.isModified) "${viewModel.currentFileName} *" else viewModel.currentFileName ?: "",
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -106,6 +115,16 @@ fun EditorScreen(
                                     },
                                 )
                                 DropdownMenuItem(
+                                    text = { Text("Close Tab") },
+                                    onClick = {
+                                        menuExpanded = false
+                                        viewModel.activeTabId?.let { onTabClosed(it) }
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Default.Close, contentDescription = null)
+                                    },
+                                )
+                                DropdownMenuItem(
                                     text = { Text("Settings") },
                                     onClick = {
                                         menuExpanded = false
@@ -118,6 +137,13 @@ fun EditorScreen(
                             }
                         }
                     },
+                )
+
+                EditorTabBar(
+                    tabs = viewModel.tabs,
+                    activeTabId = viewModel.activeTabId,
+                    onTabSelected = onTabSelected,
+                    onTabClosed = onTabClosed,
                 )
 
                 Box(
@@ -154,6 +180,62 @@ fun EditorScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .align(Alignment.TopCenter),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun EditorTabBar(
+    tabs: List<EditorTab>,
+    activeTabId: String?,
+    onTabSelected: (String) -> Unit,
+    onTabClosed: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .background(MaterialTheme.colorScheme.surfaceVariant),
+    ) {
+        tabs.forEach { tab ->
+            val isActive = tab.id == activeTabId
+            val bgColor = if (isActive) {
+                MaterialTheme.colorScheme.primaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceVariant
+            }
+            val textColor = if (isActive) {
+                MaterialTheme.colorScheme.onPrimaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurfaceVariant
+            }
+
+            Row(
+                modifier = Modifier
+                    .background(bgColor)
+                    .clickable { onTabSelected(tab.id) }
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (tab.isModified) "${tab.fileName} \u25CF" else tab.fileName,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = textColor,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.widthIn(max = 140.dp),
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Icon(
+                    imageVector = Icons.Default.Close,
+                    contentDescription = "Close tab",
+                    modifier = Modifier
+                        .size(14.dp)
+                        .clickable { onTabClosed(tab.id) },
+                    tint = textColor,
                 )
             }
         }

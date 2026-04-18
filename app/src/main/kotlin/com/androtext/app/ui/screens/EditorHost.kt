@@ -39,6 +39,7 @@ fun EditorHost(
         },
         update = { editorHost ->
             if (fileVersion != lastVersion) {
+                editorHost.createRenderer(buffer, config)
                 editorHost.setContent(buffer.getText())
                 lastVersion = fileVersion
             }

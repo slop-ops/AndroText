@@ -28,13 +28,10 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         private const val MAX_RECENT_FILES = 20
     }
 
-    var currentFileName by mutableStateOf<String?>(null)
+    var tabs by mutableStateOf<List<EditorTab>>(emptyList())
         private set
 
-    var currentFileUri by mutableStateOf<Uri?>(null)
-        private set
-
-    var isModified by mutableStateOf(false)
+    var activeTabId by mutableStateOf<String?>(null)
         private set
 
     var isLoading by mutableStateOf(false)
@@ -66,7 +63,15 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     var editorContentProvider: (() -> String)? = null
 
-    val buffer = PieceTableBuffer()
+    val activeTab: EditorTab? get() = tabs.find { it.id == activeTabId }
+
+    val activeBuffer: PieceTableBuffer? get() = activeTab?.buffer
+
+    val currentFileName: String? get() = activeTab?.fileName
+
+    val currentFileUri: Uri? get() = activeTab?.uri
+
+    val isModified: Boolean get() = activeTab?.isModified ?: false
 
     private val prefs = application.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
@@ -75,23 +80,63 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     }
 
     fun onFileOpened(uri: Uri, fileName: String, content: String) {
-        currentFileName = fileName
-        currentFileUri = uri
-        buffer.replace(0, buffer.length, content)
-        isModified = false
+        val existing = tabs.find { it.uri == uri }
+        if (existing != null) {
+            switchToTab(existing.id)
+            return
+        }
+
+        saveCurrentEditorContent()
+
+        val tab = EditorTab(uri = uri, fileName = fileName)
+        tab.buffer.replace(0, tab.buffer.length, content)
+        tabs = tabs + tab
+        activeTabId = tab.id
         fileVersion++
         addRecentFile(uri, fileName)
     }
 
+    fun switchToTab(tabId: String) {
+        if (tabId == activeTabId) return
+        saveCurrentEditorContent()
+        activeTabId = tabId
+        fileVersion++
+    }
+
+    fun closeTab(tabId: String) {
+        val idx = tabs.indexOfFirst { it.id == tabId }
+        if (idx < 0) return
+
+        val wasActive = tabId == activeTabId
+        tabs = tabs.filter { it.id != tabId }
+
+        if (wasActive) {
+            if (tabs.isNotEmpty()) {
+                val newIdx = minOf(idx, tabs.size - 1)
+                activeTabId = tabs[newIdx].id
+            } else {
+                activeTabId = null
+            }
+            fileVersion++
+        }
+    }
+
     fun onFileSaved() {
-        isModified = false
+        activeTab?.isModified = false
     }
 
     fun onContentChanged() {
-        isModified = true
+        activeTab?.isModified = true
     }
 
-    fun getContent(): String = editorContentProvider?.invoke() ?: buffer.getText().toString()
+    fun getContent(): String = editorContentProvider?.invoke()
+        ?: activeTab?.buffer?.getText()?.toString() ?: ""
+
+    private fun saveCurrentEditorContent() {
+        val content = editorContentProvider?.invoke() ?: return
+        val tab = activeTab ?: return
+        tab.buffer.replace(0, tab.buffer.length, content)
+    }
 
     fun addRecentFile(uri: Uri, displayName: String) {
         val uriString = uri.toString()
