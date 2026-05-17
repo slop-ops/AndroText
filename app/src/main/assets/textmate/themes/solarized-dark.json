@@ -3,7 +3,7 @@
     "type": "dark",
     "colors": {
         "editor.background": "#002B36",
-        "editor.foreground": "#839496"
+        "editor.foreground": "#93A1A1"
     },
     "tokenColors": [
         {

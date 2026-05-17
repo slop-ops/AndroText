@@ -19,6 +19,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import com.androtext.app.ui.navigation.Screen
 import com.androtext.app.ui.screens.EditorHost
 import com.androtext.app.ui.screens.EditorScreen
@@ -262,24 +263,12 @@ fun AndroTextApp(
             previewContent = {
                 val content = viewModel.getContent()
                 val composeColors = viewModel.currentComposeColors
-                val bgColor = composeColors?.background?.let {
-                    ((255 shl 24) or
-                        ((it.red.coerceIn(0f, 1f) * 255).toInt() shl 16) or
-                        ((it.green.coerceIn(0f, 1f) * 255).toInt() shl 8) or
-                        (it.blue.coerceIn(0f, 1f) * 255).toInt())
-                } ?: android.graphics.Color.parseColor("#002B36")
-                val fgColor = composeColors?.onBackground?.let {
-                    ((255 shl 24) or
-                        ((it.red.coerceIn(0f, 1f) * 255).toInt() shl 16) or
-                        ((it.green.coerceIn(0f, 1f) * 255).toInt() shl 8) or
-                        (it.blue.coerceIn(0f, 1f) * 255).toInt())
-                } ?: android.graphics.Color.parseColor("#839496")
-                val accentColor = composeColors?.primary?.let {
-                    ((255 shl 24) or
-                        ((it.red.coerceIn(0f, 1f) * 255).toInt() shl 16) or
-                        ((it.green.coerceIn(0f, 1f) * 255).toInt() shl 8) or
-                        (it.blue.coerceIn(0f, 1f) * 255).toInt())
-                } ?: android.graphics.Color.parseColor("#268BD2")
+                val bgColor = composeColors?.background?.toArgb()
+                    ?: android.graphics.Color.parseColor("#002B36")
+                val fgColor = composeColors?.onBackground?.toArgb()
+                    ?: android.graphics.Color.parseColor("#839496")
+                val accentColor = composeColors?.primary?.toArgb()
+                    ?: android.graphics.Color.parseColor("#268BD2")
                 MarkdownPreviewScreen(
                     markdownText = content,
                     backgroundColor = bgColor,

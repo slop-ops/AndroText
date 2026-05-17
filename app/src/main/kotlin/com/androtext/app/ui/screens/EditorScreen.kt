@@ -445,6 +445,7 @@ private fun RecentFileItem(
                 Text(
                     text = file.displayName,
                     style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }
