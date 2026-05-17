@@ -26,6 +26,8 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
@@ -61,6 +63,7 @@ fun EditorScreen(
     onTabSelected: (String) -> Unit,
     onTabClosed: (String) -> Unit,
     editorContent: @Composable () -> Unit,
+    previewContent: (@Composable () -> Unit)? = null,
 ) {
     if (viewModel.tabs.isNotEmpty()) {
         var menuExpanded by remember { mutableStateOf(false) }
@@ -82,6 +85,14 @@ fun EditorScreen(
                         actionIconContentColor = MaterialTheme.colorScheme.onSurface,
                     ),
                     actions = {
+                        if (viewModel.isMarkdownFile && previewContent != null) {
+                            IconButton(onClick = { viewModel.toggleMarkdownPreview() }) {
+                                Icon(
+                                    imageVector = if (viewModel.isMarkdownPreview) Icons.Default.Edit else Icons.Default.Visibility,
+                                    contentDescription = if (viewModel.isMarkdownPreview) "Edit" else "Preview",
+                                )
+                            }
+                        }
                         IconButton(onClick = { viewModel.toggleSearch() }) {
                             Icon(
                                 imageVector = Icons.Default.Search,
@@ -203,7 +214,11 @@ fun EditorScreen(
                         .weight(1f),
                     contentAlignment = Alignment.TopStart,
                 ) {
-                    editorContent()
+                    if (viewModel.isMarkdownPreview && viewModel.isMarkdownFile && previewContent != null) {
+                        previewContent()
+                    } else {
+                        editorContent()
+                    }
                 }
             }
 

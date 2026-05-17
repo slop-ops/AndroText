@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import com.androtext.app.ui.navigation.Screen
 import com.androtext.app.ui.screens.EditorHost
 import com.androtext.app.ui.screens.EditorScreen
+import com.androtext.app.ui.screens.MarkdownPreviewScreen
 import com.androtext.app.ui.screens.OpenFileScreen
 import com.androtext.app.ui.screens.SettingsScreen
 import com.androtext.app.ui.theme.AndroTextTheme
@@ -257,6 +258,35 @@ fun AndroTextApp(
                         },
                     )
                 }
+            },
+            previewContent = {
+                val content = viewModel.getContent()
+                val composeColors = viewModel.currentComposeColors
+                val bgColor = composeColors?.background?.let {
+                    ((255 shl 24) or
+                        ((it.red.coerceIn(0f, 1f) * 255).toInt() shl 16) or
+                        ((it.green.coerceIn(0f, 1f) * 255).toInt() shl 8) or
+                        (it.blue.coerceIn(0f, 1f) * 255).toInt())
+                } ?: android.graphics.Color.parseColor("#002B36")
+                val fgColor = composeColors?.onBackground?.let {
+                    ((255 shl 24) or
+                        ((it.red.coerceIn(0f, 1f) * 255).toInt() shl 16) or
+                        ((it.green.coerceIn(0f, 1f) * 255).toInt() shl 8) or
+                        (it.blue.coerceIn(0f, 1f) * 255).toInt())
+                } ?: android.graphics.Color.parseColor("#839496")
+                val accentColor = composeColors?.primary?.let {
+                    ((255 shl 24) or
+                        ((it.red.coerceIn(0f, 1f) * 255).toInt() shl 16) or
+                        ((it.green.coerceIn(0f, 1f) * 255).toInt() shl 8) or
+                        (it.blue.coerceIn(0f, 1f) * 255).toInt())
+                } ?: android.graphics.Color.parseColor("#268BD2")
+                MarkdownPreviewScreen(
+                    markdownText = content,
+                    backgroundColor = bgColor,
+                    foregroundColor = fgColor,
+                    accentColor = accentColor,
+                    fontSize = viewModel.fontSize,
+                )
             },
         )
 

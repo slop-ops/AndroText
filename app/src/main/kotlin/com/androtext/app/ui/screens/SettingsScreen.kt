@@ -132,6 +132,21 @@ fun SettingsScreen(
                 onCheckedChange = { viewModel.updateHighlightCurrentLine(it) },
             )
 
+            Spacer(modifier = Modifier.height(24.dp))
+
+            Text(
+                text = "Markdown",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            MarkdownViewModeSetting(
+                currentMode = viewModel.defaultMarkdownViewMode,
+                onModeChange = { viewModel.updateDefaultMarkdownViewMode(it) },
+            )
+
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
@@ -314,5 +329,51 @@ private fun SwitchSetting(
             checked = checked,
             onCheckedChange = onCheckedChange,
         )
+    }
+}
+
+@Composable
+private fun MarkdownViewModeSetting(
+    currentMode: EditorViewModel.MarkdownViewMode,
+    onModeChange: (EditorViewModel.MarkdownViewMode) -> Unit,
+) {
+    Column {
+        Text(
+            text = "Default View",
+            style = MaterialTheme.typography.bodyLarge,
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            for (mode in EditorViewModel.MarkdownViewMode.entries) {
+                val label = when (mode) {
+                    EditorViewModel.MarkdownViewMode.EDITOR -> "Editor"
+                    EditorViewModel.MarkdownViewMode.PREVIEW -> "Preview"
+                }
+                val isSelected = mode == currentMode
+                Surface(
+                    shape = RoundedCornerShape(8.dp),
+                    color = if (isSelected) {
+                        MaterialTheme.colorScheme.primaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceVariant
+                    },
+                    border = BorderStroke(
+                        width = if (isSelected) 2.dp else 1.dp,
+                        color = if (isSelected) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.outlineVariant
+                        },
+                    ),
+                    modifier = Modifier.clickable { onModeChange(mode) },
+                ) {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    )
+                }
+            }
+        }
     }
 }

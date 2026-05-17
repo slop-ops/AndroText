@@ -50,5 +50,9 @@ dependencies {
     implementation(libs.androidx.lifecycle.viewmodel.compose)
     implementation(libs.androidx.datastore.preferences)
 
+    implementation(libs.markwon.core)
+    implementation(libs.markwon.image)
+    implementation(libs.markwon.ext.tables)
+    implementation(libs.markwon.ext.tasklist)
     debugImplementation(libs.compose.ui.tooling)
 }

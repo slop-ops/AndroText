@@ -125,7 +125,51 @@
 
 ## Sprint 3: Markdown Preview — Foundation
 
-**Status**: NOT STARTED
+**Status**: COMPLETED
+
+### Subtasks
+
+| #  | Task                               | Status      | Notes |
+|----|------------------------------------|-------------|-------|
+| 3.1| Add Markwon dependencies           | Done        | `markwon:core`, `image`, `ext-tables`, `ext-tasklist` added to version catalog and `app/build.gradle.kts` |
+| 3.2| Create MarkdownPreviewScreen       | Done        | `MarkdownPreviewScreen.kt` wraps a `TextView` via `AndroidView` with Markwon rendering |
+| 3.3| Create MarkwonFactory              | Done        | `MarkwonFactory.kt` creates a configured Markwon instance with Tables, TaskList, and Images plugins |
+| 3.4| Theme the preview                  | Done        | Preview background, foreground, and accent colors derived from current theme's `ComposeThemeColors` |
+| 3.5| Add preview toggle button          | Done        | Eye/Edit icon button in top app bar, visible only for `.md`/`.markdown`/`.mdown`/`.mkd` files |
+| 3.6| Wire preview content               | Done        | `viewModel.getContent()` provides current editor text to `MarkdownPreviewScreen` |
+| 3.7| MD syntax highlighting             | Done        | Markdown TextMate grammar from Sprint 1 applied to `.md` files in editor view |
+| 3.8| Add preview mode preference        | Done        | `MarkdownViewMode` enum (EDITOR, PREVIEW) persisted via DataStore; setting in SettingsScreen under "Markdown" section |
+
+### Markdown Features Supported
+
+- Headings (h1–h6)
+- Bold, italic, strikethrough
+- Ordered and unordered lists
+- Task lists (checkboxes)
+- Tables (GFM)
+- Links (clickable)
+- Images (async loading via `ImagesPlugin`)
+- Code spans and fenced code blocks
+- Blockquotes
+- Horizontal rules
+
+### Key Files Changed
+
+- `app/build.gradle.kts` — added Markwon dependencies
+- `gradle/libs.versions.toml` — added `markwon = "4.6.1"` version and library entries
+- `app/src/main/kotlin/com/androtext/app/ui/markdown/MarkwonFactory.kt` — NEW: configured Markwon singleton
+- `app/src/main/kotlin/com/androtext/app/ui/screens/MarkdownPreviewScreen.kt` — NEW: composable wrapping Markwon-rendered TextView
+- `app/src/main/kotlin/com/androtext/app/ui/screens/EditorScreen.kt` — added preview toggle button, conditional editor/preview display
+- `app/src/main/kotlin/com/androtext/app/ui/viewmodel/EditorViewModel.kt` — added `isMarkdownPreview`, `isMarkdownFile`, `defaultMarkdownViewMode`, `MarkdownViewMode` enum, DataStore persistence
+- `app/src/main/kotlin/com/androtext/app/ui/screens/SettingsScreen.kt` — added Markdown section with default view mode selector
+- `app/src/main/kotlin/com/androtext/app/MainActivity.kt` — wired `previewContent` lambda with theme-derived colors
+
+### Known Issues
+
+- Code blocks in markdown preview are not syntax-highlighted (plain monospace text only). Adding `syntax-highlight` plugin requires prism4j annotation processing or the `prism4j-bundle` artifact, which was deferred to avoid kapt complexity.
+- Markwon instance is cached per (bg, fg, accent) color tuple; theme changes invalidate and recreate it.
+- No split view mode yet — preview replaces the editor (Sprint 4).
+- Preview does not auto-scroll to match editor position.
 
 ---
 

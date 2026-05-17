@@ -39,7 +39,10 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         private const val KEY_RECENT_FILES = "recent_files"
         private const val MAX_RECENT_FILES = 20
         private val KEY_THEME = stringPreferencesKey("theme_id")
+        private val KEY_MD_VIEW_MODE = stringPreferencesKey("md_view_mode")
     }
+
+    enum class MarkdownViewMode { EDITOR, PREVIEW }
 
     private val Context.dataStore by preferencesDataStore("settings")
 
@@ -87,6 +90,18 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     var onThemeChanged: ((String) -> Unit)? = null
 
+    var isMarkdownPreview by mutableStateOf(false)
+        private set
+
+    var defaultMarkdownViewMode by mutableStateOf(MarkdownViewMode.EDITOR)
+        private set
+
+    val isMarkdownFile: Boolean
+        get() = currentFileName?.endsWith(".md", ignoreCase = true) == true
+            || currentFileName?.endsWith(".markdown", ignoreCase = true) == true
+            || currentFileName?.endsWith(".mdown", ignoreCase = true) == true
+            || currentFileName?.endsWith(".mkd", ignoreCase = true) == true
+
     var editorContentProvider: (() -> String)? = null
 
     var isSearchOpen by mutableStateOf(false)
@@ -130,6 +145,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     init {
         loadRecentFiles()
         loadThemePreference()
+        loadMarkdownViewModePreference()
     }
 
     fun onFileOpened(uri: Uri, fileName: String, content: String) {
@@ -153,6 +169,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         if (tabId == activeTabId) return
         saveCurrentEditorContent()
         if (isSearchOpen) closeSearch()
+        isMarkdownPreview = false
         activeTabId = tabId
         fileVersion++
     }
@@ -324,6 +341,46 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     fun updateHighlightCurrentLine(highlight: Boolean) {
         highlightCurrentLine = highlight
         editorConfig = editorConfig.copy(highlightCurrentLine = highlight)
+    }
+
+    fun toggleMarkdownPreview() {
+        isMarkdownPreview = !isMarkdownPreview
+    }
+
+    fun showMarkdownPreview(show: Boolean) {
+        isMarkdownPreview = show
+    }
+
+    fun updateDefaultMarkdownViewMode(mode: MarkdownViewMode) {
+        defaultMarkdownViewMode = mode
+        saveMarkdownViewModePreference(mode)
+    }
+
+    private fun loadMarkdownViewModePreference() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val prefs = getApplication<Application>().dataStore.data.first()
+                val saved = prefs[KEY_MD_VIEW_MODE] ?: return@launch
+                withContext(Dispatchers.Main) {
+                    try {
+                        defaultMarkdownViewMode = MarkdownViewMode.valueOf(saved)
+                    } catch (_: Exception) {
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun saveMarkdownViewModePreference(mode: MarkdownViewMode) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                getApplication<Application>().dataStore.edit { prefs ->
+                    prefs[KEY_MD_VIEW_MODE] = mode.name
+                }
+            } catch (_: Exception) {
+            }
+        }
     }
 
     fun toggleSearch() {
