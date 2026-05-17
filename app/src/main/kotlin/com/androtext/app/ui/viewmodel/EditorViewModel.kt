@@ -8,9 +8,21 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.androtext.core.buffer.PieceTableBuffer
 import com.androtext.core.render.EditorConfig
+import com.androtext.core.render.theme.ComposeThemeColors
+import com.androtext.core.render.theme.EditorTheme
+import com.androtext.core.render.theme.ThemeRegistry
+import com.androtext.core.lang.LanguageRegistry as AppLanguageRegistry
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.json.JSONArray
 import org.json.JSONObject
 
@@ -26,7 +38,10 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         private const val PREFS_NAME = "androtext"
         private const val KEY_RECENT_FILES = "recent_files"
         private const val MAX_RECENT_FILES = 20
+        private val KEY_THEME = stringPreferencesKey("theme_id")
     }
+
+    private val Context.dataStore by preferencesDataStore("settings")
 
     var tabs by mutableStateOf<List<EditorTab>>(emptyList())
         private set
@@ -60,6 +75,17 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     var recentFiles by mutableStateOf<List<RecentFile>>(emptyList())
         private set
+
+    var currentThemeId by mutableStateOf(ThemeRegistry.DEFAULT_THEME_ID)
+        private set
+
+    var currentComposeColors by mutableStateOf<ComposeThemeColors?>(null)
+        private set
+
+    val availableThemes: List<EditorTheme>
+        get() = ThemeRegistry.getInstance().getAvailableThemes()
+
+    var onThemeChanged: ((String) -> Unit)? = null
 
     var editorContentProvider: (() -> String)? = null
 
@@ -103,6 +129,7 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     init {
         loadRecentFiles()
+        loadThemePreference()
     }
 
     fun onFileOpened(uri: Uri, fileName: String, content: String) {
@@ -219,6 +246,64 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
     fun updateFontSize(size: Float) {
         fontSize = size
         editorConfig = editorConfig.copy(fontSize = size)
+    }
+
+    fun selectTheme(themeId: String) {
+        val registry = ThemeRegistry.getInstance()
+        if (registry.getTheme(themeId) == null) return
+        currentThemeId = themeId
+        registry.setCurrentThemeId(themeId)
+        AppLanguageRegistry.getInstance().setActiveTheme(themeId)
+        refreshComposeColors()
+        onThemeChanged?.invoke(themeId)
+        saveThemePreference(themeId)
+    }
+
+    fun refreshComposeColors() {
+        val registry = ThemeRegistry.getInstance()
+        val app = getApplication<Application>()
+        currentComposeColors = registry.getCurrentComposeColors(app.assets)
+    }
+
+    fun initializeTheme() {
+        val registry = ThemeRegistry.getInstance()
+        val app = getApplication<Application>()
+        registry.loadThemesFromAssets(app.assets)
+        registry.setCurrentThemeId(currentThemeId)
+        refreshComposeColors()
+    }
+
+    private fun loadThemePreference() {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val prefs = getApplication<Application>().dataStore.data.first()
+                val savedId = prefs[KEY_THEME] ?: return@launch
+                withContext(Dispatchers.Main) {
+                    currentThemeId = savedId
+                    val registry = ThemeRegistry.getInstance()
+                    if (registry.getTheme(savedId) != null) {
+                        registry.setCurrentThemeId(savedId)
+                        try {
+                            AppLanguageRegistry.getInstance().setActiveTheme(savedId)
+                        } catch (_: Exception) {
+                        }
+                        refreshComposeColors()
+                    }
+                }
+            } catch (_: Exception) {
+            }
+        }
+    }
+
+    private fun saveThemePreference(themeId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                getApplication<Application>().dataStore.edit { prefs ->
+                    prefs[KEY_THEME] = themeId
+                }
+            } catch (_: Exception) {
+            }
+        }
     }
 
     fun updateShowLineNumbers(show: Boolean) {

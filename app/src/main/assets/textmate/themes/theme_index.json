@@ -1,0 +1,12 @@
+[
+  {"id": "solarized-dark", "name": "Solarized Dark", "fileName": "solarized-dark.json", "isDark": true, "previewColors": ["#002B36", "#268BD2", "#859900", "#2AA198", "#586E75"]},
+  {"id": "monokai", "name": "Monokai", "fileName": "monokai.json", "isDark": true, "previewColors": ["#272822", "#F92672", "#E6DB74", "#A6E22E", "#AE81FF"]},
+  {"id": "one-dark-pro", "name": "One Dark Pro", "fileName": "one-dark-pro.json", "isDark": true, "previewColors": ["#282C34", "#C678DD", "#98C379", "#61AFEF", "#D19A66"]},
+  {"id": "dracula", "name": "Dracula", "fileName": "dracula.json", "isDark": true, "previewColors": ["#282A36", "#FF79C6", "#F1FA8C", "#50FA7B", "#BD93F9"]},
+  {"id": "nord", "name": "Nord", "fileName": "nord.json", "isDark": true, "previewColors": ["#2E3440", "#81A1C1", "#A3BE8C", "#88C0D0", "#B48EAD"]},
+  {"id": "github-dark", "name": "GitHub Dark", "fileName": "github-dark.json", "isDark": true, "previewColors": ["#0D1117", "#FF7B72", "#A5D6FF", "#D2A8FF", "#79C0FF"]},
+  {"id": "github-light", "name": "GitHub Light", "fileName": "github-light.json", "isDark": false, "previewColors": ["#FFFFFF", "#CF222E", "#0A3069", "#8250DF", "#0550AE"]},
+  {"id": "solarized-light", "name": "Solarized Light", "fileName": "solarized-light.json", "isDark": false, "previewColors": ["#FDF6E3", "#268BD2", "#859900", "#2AA198", "#93A1A1"]},
+  {"id": "catppuccin-mocha", "name": "Catppuccin Mocha", "fileName": "catppuccin-mocha.json", "isDark": true, "previewColors": ["#1E1E2E", "#CBA6F7", "#A6E3A1", "#89B4FA", "#FAB387"]},
+  {"id": "tokyonight-night", "name": "Tokyonight Night", "fileName": "tokyonight-night.json", "isDark": true, "previewColors": ["#1A1B26", "#BB9AF7", "#9ECE6A", "#7AA2F7", "#FF9E64"]}
+]

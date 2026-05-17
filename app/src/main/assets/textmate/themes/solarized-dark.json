@@ -1,0 +1,152 @@
+{
+    "name": "Solarized Dark",
+    "type": "dark",
+    "colors": {
+        "editor.background": "#002B36",
+        "editor.foreground": "#839496"
+    },
+    "tokenColors": [
+        {
+            "settings": {
+                "foreground": "#839496",
+                "background": "#002B36"
+            }
+        },
+        {
+            "name": "Comment",
+            "scope": ["comment", "punctuation.definition.comment", "string.quoted.docstring"],
+            "settings": {
+                "foreground": "#586E75"
+            }
+        },
+        {
+            "name": "String",
+            "scope": ["string", "punctuation.definition.string"],
+            "settings": {
+                "foreground": "#2AA198"
+            }
+        },
+        {
+            "name": "String constant/escape",
+            "scope": ["constant.character.escape", "string.regexp"],
+            "settings": {
+                "foreground": "#DC322F"
+            }
+        },
+        {
+            "name": "Number",
+            "scope": ["constant.numeric", "constant.language", "constant.other"],
+            "settings": {
+                "foreground": "#D33682"
+            }
+        },
+        {
+            "name": "Keyword",
+            "scope": ["keyword", "keyword.control", "keyword.operator", "storage", "storage.type", "storage.modifier"],
+            "settings": {
+                "foreground": "#859900"
+            }
+        },
+        {
+            "name": "Variable",
+            "scope": ["variable", "variable.other"],
+            "settings": {
+                "foreground": "#B58900"
+            }
+        },
+        {
+            "name": "Function",
+            "scope": ["entity.name.function", "support.function", "meta.function-call"],
+            "settings": {
+                "foreground": "#268BD2"
+            }
+        },
+        {
+            "name": "Type/Class",
+            "scope": ["entity.name.type", "support.type", "support.class", "entity.other.inherited-class"],
+            "settings": {
+                "foreground": "#B58900"
+            }
+        },
+        {
+            "name": "Annotation/Decorator",
+            "scope": ["meta.decorator", "punctuation.decorator", "storage.type.annotation"],
+            "settings": {
+                "foreground": "#B58900"
+            }
+        },
+        {
+            "name": "Tag",
+            "scope": ["entity.name.tag", "meta.tag", "punctuation.definition.tag"],
+            "settings": {
+                "foreground": "#268BD2"
+            }
+        },
+        {
+            "name": "Attribute",
+            "scope": ["entity.other.attribute-name", "meta.attribute"],
+            "settings": {
+                "foreground": "#B58900"
+            }
+        },
+        {
+            "name": "Heading",
+            "scope": ["markup.heading", "entity.name.section"],
+            "settings": {
+                "foreground": "#268BD2",
+                "fontStyle": "bold"
+            }
+        },
+        {
+            "name": "Markup bold",
+            "scope": ["markup.bold"],
+            "settings": {
+                "fontStyle": "bold",
+                "foreground": "#859900"
+            }
+        },
+        {
+            "name": "Markup italic",
+            "scope": ["markup.italic"],
+            "settings": {
+                "fontStyle": "italic",
+                "foreground": "#859900"
+            }
+        },
+        {
+            "name": "Markup link",
+            "scope": ["string.other.link", "markup.underline.link"],
+            "settings": {
+                "foreground": "#2AA198"
+            }
+        },
+        {
+            "name": "Markup code",
+            "scope": ["markup.raw", "markup.inline.raw", "fenced_code.block.language"],
+            "settings": {
+                "foreground": "#93A1A1"
+            }
+        },
+        {
+            "name": "Punctuation",
+            "scope": ["punctuation"],
+            "settings": {
+                "foreground": "#839496"
+            }
+        },
+        {
+            "name": "Operator",
+            "scope": ["keyword.operator"],
+            "settings": {
+                "foreground": "#859900"
+            }
+        },
+        {
+            "name": "Preprocessor",
+            "scope": ["meta.preprocessor", "keyword.control.import"],
+            "settings": {
+                "foreground": "#CB4B16"
+            }
+        }
+    ]
+}

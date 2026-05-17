@@ -24,9 +24,9 @@ android {
 }
 
 dependencies {
-    implementation(platform(libs.sora.bom))
-    implementation(libs.sora.editor)
-    implementation(libs.sora.language.textmate)
+    api(platform(libs.sora.bom))
+    api(libs.sora.editor)
+    api(libs.sora.language.textmate)
 
     implementation(project(":core:text-buffer"))
 }

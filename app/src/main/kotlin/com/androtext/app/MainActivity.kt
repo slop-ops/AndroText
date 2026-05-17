@@ -26,6 +26,7 @@ import com.androtext.app.ui.screens.OpenFileScreen
 import com.androtext.app.ui.screens.SettingsScreen
 import com.androtext.app.ui.theme.AndroTextTheme
 import com.androtext.app.ui.viewmodel.EditorViewModel
+import com.androtext.core.lang.LanguageRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.launch
@@ -34,6 +35,8 @@ import kotlinx.coroutines.withContext
 class MainActivity : ComponentActivity() {
 
     private val viewModel: EditorViewModel by viewModels()
+
+    private val languageRegistry: LanguageRegistry = LanguageRegistry.getInstance()
 
     private val openFileLauncher = registerForActivityResult(
         ActivityResultContracts.OpenDocument(),
@@ -46,9 +49,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        initLanguageRegistry()
+        viewModel.initializeTheme()
         handleIncomingIntent(intent)
         setContent {
-            AndroTextTheme {
+            AndroTextTheme(themeColors = viewModel.currentComposeColors) {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
@@ -78,6 +83,15 @@ class MainActivity : ComponentActivity() {
             if (uri != null) {
                 loadFileFromUri(uri)
             }
+        }
+    }
+
+    private fun initLanguageRegistry() {
+        languageRegistry.initialize(this)
+        val scope = MainScope()
+        scope.launch(Dispatchers.IO) {
+            languageRegistry.loadAllThemes(assets)
+            languageRegistry.registerAllLanguages()
         }
     }
 
@@ -222,6 +236,8 @@ fun AndroTextApp(
                         buffer = buffer,
                         config = viewModel.editorConfig,
                         fileVersion = viewModel.fileVersion,
+                        fileName = viewModel.currentFileName,
+                        themeId = viewModel.currentThemeId,
                         onContentChanged = { viewModel.onContentChanged() },
                         onHostReady = { host ->
                             viewModel.editorContentProvider =
